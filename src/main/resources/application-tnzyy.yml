@@ -1,0 +1,85 @@
+server:
+  port: 8091
+  servlet:
+    context-path: /insurance
+requestVO:
+  #  msgid: 0
+  mdtrtarea_admvs: 500152
+  #  recer_sys_code: 2
+  fixmedins_code: H50015201367
+  fixmedins_name: 重庆市潼南区中医院
+  infver: 1
+  url: http://localhost:8097/fsi/api/rsfComIfsService/callService
+  operateNo: '000001'
+  operateName: admin
+  operateType: 1
+  serv_code: SEgwMDAwMQ==
+  serv_sign: QTZCMzcyMDU0NDA0OUUxMzk3
+
+#国家医生代码字段名称
+doctorCode: gjysbm
+#inp_bill_detail 医院自费项目标志
+selfFlag: a.pay_self_flag
+# newBornFlag 母亲新生儿费用合并上传支持 1，支持 0 不支持
+newBornFlag: 0
+
+
+#对账
+checkAcctDettail:
+  queryUpload: setl_id,mdtrt_id,psn_no,medfee_sumamt,fund_pay_sumamt,acct_pay,refd_setl_flag
+
+
+#特殊交易列表
+specialBusiness:
+  readCard: 1101,1161,1162
+
+
+spring:
+  datasource:
+    url: jdbc:oracle:thin:@10.16.21.180:1521:orcl
+    username: system
+    password: manager
+    driver-class-name: oracle.jdbc.OracleDriver
+    type: com.zaxxer.hikari.HikariDataSource
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 15
+      auto-commit: true
+      idle-timeout: 30000
+      pool-name: DatebookHikariCP
+      max-lifetime: 1800000
+      connection-timeout: 30000
+      connection-test-query: SELECT 1 FROM DUAL
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+    serialization:
+      write-dates-as-timestamps: false
+  devtools:
+    restart:
+      enabled: true  #设置开启热部署
+      additional-paths: src/main/java #重启目录
+      exclude: WEB-INF/**
+
+logging:
+  level:
+    root: info
+
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: false
+    auto-mapping-behavior: full
+    jdbc-type-for-null: 'null'
+    callSettersOnNulls: true
+  #    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  mapper-locations: classpath*:mapper/**/*Mapper.xml
+  global-config:
+    banner: false
+    db-config:
+      id-type: auto
+      field-strategy: not_null
+      column-like: true
+      logic-delete-value: -1
+      logic-not-delete-value: 0
+
+

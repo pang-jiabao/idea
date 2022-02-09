@@ -1,0 +1,54 @@
+server:
+  port: 8091
+  servlet:
+    context-path: /insurance
+
+spring:
+  datasource:
+    url: jdbc:oracle:thin:@47.108.86.168:1529:fy
+    username: system
+    password: manager
+    driver-class-name: oracle.jdbc.OracleDriver
+    type: com.zaxxer.hikari.HikariDataSource
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 15
+      auto-commit: true
+      idle-timeout: 30000
+      pool-name: DatebookHikariCP
+      max-lifetime: 1800000
+      connection-timeout: 30000
+      connection-test-query: SELECT 1 FROM DUAL
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+    serialization:
+      write-dates-as-timestamps: false
+  devtools:
+    restart:
+      enabled: true  #设置开启热部署
+      additional-paths: src/main/java #重启目录
+      exclude: WEB-INF/**
+
+logging:
+  level:
+    root: info
+
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: false
+    auto-mapping-behavior: full
+    jdbc-type-for-null: 'null'
+    callSettersOnNulls: true
+  #    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  mapper-locations: classpath*:mapper/**/*Mapper.xml
+  global-config:
+    banner: false
+    db-config:
+      id-type: auto
+      field-strategy: not_null
+      column-like: true
+      logic-delete-value: -1
+      logic-not-delete-value: 0
+
+

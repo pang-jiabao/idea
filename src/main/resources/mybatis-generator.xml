@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?> <!DOCTYPE generatorConfiguration   PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN"   "http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd">
+<generatorConfiguration>
+    <context id="DB2Tables" targetRuntime="MyBatis3Simple">
+        <commentGenerator>
+            <property name="suppressDate" value="true" />
+            <!-- 是否去除自动生成的注释 true：是 ： false:否 -->
+            <!-- 这个注释是generator的注释。不是建表时手输的，没什么卵用-->
+            <property name="suppressAllComments" value="true" />
+        </commentGenerator>
+
+        <!--数据库链接URL，用户名、密码 -->
+        <jdbcConnection
+            driverClass="oracle.jdbc.OracleDriver"
+            connectionURL="jdbc:oracle:thin:@47.108.86.168:1529:tnzyy"
+            userId="system" password="managertn">
+        </jdbcConnection>
+
+        <javaTypeResolver>
+            <property name="forceBigDecimals" value="false" />
+        </javaTypeResolver>
+
+        <!-- 设置Java类生成的位置 -->
+        <javaModelGenerator
+            targetPackage="com.symedsoft.insurance.entity"
+            targetProject=".\src\main\java">
+            <property name="enableSubPackages" value="false" />
+            <property name="trimStrings" value="true" />
+        </javaModelGenerator>
+
+        <!--&lt;!&ndash; 生成映射文件的包名和位置 ***mapper.xml&ndash;&gt;
+        <sqlMapGenerator
+            targetPackage="\mapper"
+             targetProject=".\src\main\resources">
+            <property name="enableSubPackages" value="false" />
+        </sqlMapGenerator>
+        &lt;!&ndash; 生成DAO的包名和位置 ***mapper.java&ndash;&gt;
+        <javaClientGenerator
+            type="XMLMAPPER"
+            targetPackage="com.symedsoft.insurance.mapper" targetProject=".\src\main\java">
+            <property name="enableSubPackages" value="false" />
+        </javaClientGenerator>-->
+
+        <!-- 所有要生成的表名 -->
+        <table schema="INSURSY" tableName="INSUR_BUSINESS_CONFIG" domainObjectName="InsurBusinessConfig"
+               enableCountByExample="false" enableUpdateByExample="false"
+               enableDeleteByExample="false" enableSelectByExample="false"
+               selectByExampleQueryId="false">
+            <property name="useActualColumnNames" value="true"/>
+        </table>
+
+    </context>
+</generatorConfiguration>
