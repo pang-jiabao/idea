@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.symedsoft.insurance.mapper.CheckAcctMapper">
+
+    <!--退费结算标志 refdSetlFlag   0 否    1 是-->
+    <select id="queryDetailDataByTime" parameterType="map" resultType="map">
+        <if test="type == 1 or type == 3">
+            select setl_id "setl_id",
+               mdtrt_id "mdtrt_id",
+               psn_no "psn_no",
+               nvl(medfee_sumamt,0) "medfee_sumamt",
+               nvl(fund_pay_sumamt,0) "fund_pay_sumamt",
+               nvl(acct_pay,0) "acct_pay",
+<![CDATA[
+                '0' ]]> as "refd_setl_flag"
+            from
+            <if test="type == 1"> OUTP_SETTLE_SETLINFO_OUT </if>
+            <if test="type == 3"> INP_SETTLE_SETLINFO_OUT </if>
+<![CDATA[
+            where to_char(setl_time,'yyyy-mm-dd hh24:mi:ss') >= #{beginTime}
+            and  to_char(setl_time,'yyyy-mm-dd hh24:mi:ss') <= #{endTime}
+]]>
+        </if>
+
+        <if test="type == 2 or type == 4">
+            select a.setl_id "setl_id",
+                a.mdtrt_id "mdtrt_id",
+                b.psn_no "psn_no",
+                nvl(a.medfee_sumamt,0) "medfee_sumamt",
+                nvl(a.fund_pay_sumamt,0) "fund_pay_sumamt",
+                nvl(a.acct_pay,0) "acct_pay",
+                <![CDATA[
+                '1' as "refd_setl_flag"
+                ]]>
+            from
+            <if test="type == 2">
+                OUTP_SETTLE_RET_SETLINFO_OUT a
+                join OUTP_SETTLE_RET_IN b
+                on a.serial_no = b.serial_no
+                and a.patient_id = b.patient_id
+                and a.visit_id = b.visit_id
+            </if>
+            <if test="type == 4">
+                INP_SETTLE_RET_SETLINFO_OUT a
+                join INP_SETTLE_RET_DATA_IN b
+                on a.serial_no = b.serial_no
+                and a.patient_id = b.patient_id
+                and a.visit_id = b.visit_id
+
+            </if>
+<![CDATA[
+            where to_char(a.setl_time,'yyyy-mm-dd hh24:mi:ss') >= #{beginTime}
+            and  to_char(a.setl_time,'yyyy-mm-dd hh24:mi:ss') <= #{endTime}
+]]>
+        </if>
+    </select>
+
+    <select id="queryCheckDetail" parameterType="string" resultType="map">
+        select patient_id "patient_id",
+               visit_id "visit_id",
+               visit_date "visit_date",
+               operate_no "operate_no",
+               setl_optins "setl_optins",
+               file_qury_no "file_qury_no",
+               stmt_begndate "stmt_begndate",
+               stmt_enddate "stmt_enddate",
+               medfee_sumamt "medfee_sumamt",
+               fund_pay_sumamt "fund_pay_sumamt",
+               cash_payamt "cash_payamt",
+               fixmedins_setl_cnt "fixmedins_setl_cnt"
+        from insur_check_detail_in where serial_no = #{serialNo}
+    </select>
+
+    <select id="queryListSortFromConfig" parameterType="map" resultType="String">
+        select config_item
+        from insur_business_config
+        where businessid = #{interfaceCode}
+        and io_flag = 'I'
+        and config_type = 1
+        order by item_no
+    </select>
+
+</mapper>

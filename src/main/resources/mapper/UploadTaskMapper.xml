@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.symedsoft.insurance.mapper.UploadTaskMapper">
+
+<!--    新增一个表，拿来记录定时任务需要上传的信息主表-->
+    <select id="queryTaskTable">
+
+    </select>
+
+    <select id="querySerialNoByTableName"  resultType="string">
+        select SERIAL_NO "serialNo" from ${tableName} where
+        <if test="isFlag == 0">
+            UPLOAD_FLAG = 0 or UPLOAD_FLAG is null
+        </if>
+        <if test="isFlag == 1">
+            UPLOAD_FLAG = 1
+        </if>
+        <if test="isFlag == 2">
+            UPLOAD_FLAG = 2
+        </if>
+        <if test="isFlag == 3">
+            UPLOAD_FLAG = 3
+        </if>
+    </select>
+
+    <update id="modifyStatusBySerialNo" parameterType="map">
+        update ${tableName} set upload_flag = #{flag}
+        where serial_no
+        <if test="multiline == true">
+            in
+            <foreach collection="serialNos" item="serialNo" index="index" open="(" close=")" separator=",">
+                #{serialNo}
+            </foreach>
+        </if>
+        <if test="multiline == false">
+            = #{serialNo}
+        </if>
+    </update>
+
+    <select id="queryParamByCode" resultType="string" parameterType="string">
+        select * from insur_schedule_task where METHOD_PARAMS like '%${interfaceCode}'
+    </select>
+</mapper>

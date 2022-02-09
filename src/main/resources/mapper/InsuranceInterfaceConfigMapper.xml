@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.symedsoft.insurance.mapper.InsuranceInterfaceMapper">
+
+    <!--查询接口配置信息-->
+    <select id = "getInterfaceConfig" resultType="com.symedsoft.insurance.vo.InsurBusinessConfigVO">
+        SELECT
+            BUSINESSID	businessid	,
+            IO_FLAG	io_flag	,
+            CONFIG_ITEM	config_item	,
+            CONFIG_TYPE	config_type	,
+            CONFIG_ITEM	node	,
+            ITEM_NO	item_no	,
+            RELAT_BID	relat_bid	,
+            NODE_TABLE	node_table	,
+            MULTI_LINE	multi_line  ,
+            NODE_DATE_TYPE node_date_type ,
+            NODE_TIME_TYPE node_time_type ,
+            NODE_NUMBER_TYPE  node_number_type
+        FROM INSUR_BUSINESS_CONFIG
+        where
+        /*CONFIG_TYPE:1-item 2-node 3-exp扩展字段 */
+        CONFIG_TYPE = '2'
+        AND UPPER(IO_FLAG) = #{io}
+        AND BUSINESSID = #{code}
+        order by node_sort
+    </select>
+    <!--查询接口配置信息-->
+    <select id = "getInterfaceConfigByComfigItem" resultType="com.symedsoft.insurance.vo.InsurBusinessConfigVO">
+        SELECT
+            BUSINESSID	businessid	,
+            IO_FLAG	io_flag	,
+            CONFIG_ITEM	config_item	,
+            CONFIG_TYPE	config_type	,
+            CONFIG_ITEM	node	,
+            ITEM_NO	item_no	,
+            RELAT_BID	relat_bid	,
+            NODE_TABLE	node_table	,
+            MULTI_LINE	multi_line  ,
+            NODE_DATE_TYPE node_date_type ,
+            NODE_TIME_TYPE node_time_type ,
+            NODE_NUMBER_TYPE  node_number_type
+        FROM INSUR_BUSINESS_CONFIG
+        where
+        /*CONFIG_TYPE:1-item 2-node 3-exp扩展字段 */
+        CONFIG_TYPE = '2'
+        AND UPPER(IO_FLAG) = #{io}
+        AND BUSINESSID = #{code}
+        and config_item=#{itemName}
+        order by node_sort
+    </select>
+
+    <!--查询对应入参表的入参-->
+    <select id="getInputByTableNameAndSerialNo" resultType="map">
+        SELECT * FROM ${table}  WHERE SERIAL_NO = #{serialNo}
+    </select>
+    <!--查询对应入参表的入参-->
+    <select id="getInputByTableNameAndId" resultType="map">
+        SELECT * FROM ${table}  WHERE id = #{id}
+    </select>
+    <select id="getInputByTableNameAndCase" parameterType="map" resultType="map">
+        select * from ${table} where
+        <if test="interfaceCode != null and interfaceCode != ''">
+            interface_code = #{interfaceCode}
+        </if>
+    </select>
+
+    <insert id = "insertOut">
+        INSERT ALL
+        <foreach collection="listData" item="valMap" index="index" separator=" " >
+            INTO ${table} (
+            ID,
+            SERIAL_NO,
+            OUTPUT_TIME,
+            PATIENT_ID,
+            VISIT_DATE,
+            VISIT_ID
+            <foreach collection="valMap.keys" item="key" open="," separator="," >
+                ${key}
+            </foreach>
+            ) VALUES (
+                SYS_GUID(),
+                #{serialNo},
+                SYSDATE,
+                #{log.patientId},
+                #{log.visitDate},
+                #{log.visitId}
+            <foreach collection="valMap.values" item="val" open="," separator="," >
+                #{val}
+            </foreach>
+            )
+        </foreach>
+        SELECT 1 FROM DUAL
+    </insert>
+
+    <insert id="insertOutWithOutBase">
+        INSERT ALL
+        <foreach collection="listData" item="valMap" index="index" separator=" " >
+            INTO ${table} (
+            ID,
+            SERIAL_NO
+            <foreach collection="valMap.keys" item="key" open="," separator="," >
+                ${key}
+            </foreach>
+            ) VALUES (
+            SYS_GUID(),
+            #{serialNo}
+            <foreach collection="valMap.values" item="val" open="," separator="," >
+                #{val}
+            </foreach>
+            )
+        </foreach>
+        SELECT 1 FROM DUAL
+    </insert>
+
+
+
+
+    <delete id="delTableByOperateNo" parameterType="map">
+        delete from ${table} where operate_no = #{operateNo}
+    </delete>
+
+    <select id="selectOperateNameByNo" resultType="string">
+        SELECT NAME FROM STAFF_DICT WHERE EMP_NO = #{operateNo}
+    </select>
+
+    <select id="selectExpProperty" resultType="map">
+        SELECT
+            A.CONFIG_ITEM "property",
+            A.node_table "table",
+            to_char(A.MULTI_LINE) "propertyType",
+            A.NODE_DATE_TYPE "dateType" ,
+            A.NODE_TIME_TYPE "timeType" ,
+            A.NODE_NUMBER_TYPE  "numberType",
+            B.CONFIG_ITEM "node",
+            to_char(B.MULTI_LINE) "nodeType"
+        FROM  INSUR_BUSINESS_CONFIG A
+        JOIN INSUR_BUSINESS_CONFIG B on A.BUSINESSID = B.BUSINESSID
+        AND A.IO_FLAG = b.IO_FLAG AND A.parent_node = B.node_sort AND  B.CONFIG_TYPE = '2'
+       /*CONFIG_TYPE:1-item 2-node 3-exp扩展字段 */
+        where A.CONFIG_TYPE = 3
+        AND A.BUSINESSID = #{code}
+        AND UPPER(A.IO_FLAG) = #{io}
+    </select>
+    
+    <select id="getMsgIdSequence" resultType="String">
+        SELECT TO_CHAR(MSG_ID_SEQ.NEXTVAL,'FM0000')   FROM DUAL
+    </select>
+
+    <select id="getInsuplcAdmdvs" resultType="map">
+        select
+        serial_no "serialNo",
+        insuplc_admdvs "insuplc_admdvs",
+        psn_type "psn_type"
+        from GET_PATIENT_INSUINFO_OUT where patient_id = #{patientId}
+        order by output_time desc
+    </select>
+
+
+    <!--查节点对应的出参字段-->
+    <select id="getNodeColumn" resultType="java.lang.String">
+        select
+        distinct
+        lower(a.config_item)
+        from INSUR_BUSINESS_CONFIG a
+        join INSUR_BUSINESS_CONFIG b on a.node_sort = b.node_sort
+        where   a.BUSINESSID = #{code}
+        AND UPPER(a.IO_FLAG) = #{IO}
+        and a.config_type = 1
+        <if test="node!=null and node !=''">
+            and b.CONFIG_ITEM = #{node}
+        </if>
+
+
+    </select>
+    <select id="getPatientCardecinfoIn" resultType="map">
+        select operate_no "opter",operatorname "opter_name", orgId "orgId",businessType "businessType",operatorId "operatorId",operatorName "operatorName",officeId "officeId",officeName "officeName",deviceType "deviceType"
+        from GET_PATIENT_CARDECINFO_IN where rownum=1 and serial_no=#{serialNo}
+    </select>
+    <select id="getPatientIdforInp" resultType="map">
+        SELECT distinct patient_id FROM ${table}  WHERE SERIAL_NO = #{serialNo}
+    </select>
+
+    <!-- 新增新生儿判定-->
+    <select id="queryReadCardBaseInfoByPsnNo" resultType="map">
+        select patient_id "patientId",serial_no "serialNo"
+        from  GET_PATIENT_BASEINFO_OUT where psn_no = #{psnNo}
+        <if test="newborn!=null and newborn !='' and newborn == '1'.toString">
+            and newborn = #{newborn}
+        </if>
+    </select>
+
+    <select id="getNameToPatMasterIndex" resultType="java.lang.String">
+        select name from pat_master_index where patient_id=#{patientId}
+    </select>
+
+    <update id="updateOutpSetterOutFlag">
+        update outp_settle_setlinfo_out set cancel_flag = '1' where serial_no=#{serialNo} and cancel_flag is null
+    </update>
+
+    <update id="updateOutpSetterInFlag">
+        update outp_settle_in set cancel_flag = '1' where serial_no=#{serialNo} and cancel_flag is null
+    </update>
+
+    <update id="updateInpSetterOutFlag">
+        update inp_settle_setlinfo_out set cancel_flag = '1' where serial_no=#{serialNo} and cancel_flag is null
+    </update>
+    <update id="updateInpSetterInFlag">
+        update inp_settle_data_in set cancel_flag = '1' where serial_no=#{serialNo} and cancel_flag is null
+    </update>
+    <update id="updateGetPatientBaseinfoOut">
+        update get_patient_baseinfo_out set newborn='1' where serial_no=#{serialNo}
+    </update>
+</mapper>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.symedsoft.insurance.mapper.ScheduleMapper">
+
+    <select id="queryTaskTable" parameterType="int" resultType="map">
+        select
+            bean_name "beanName",
+            method_name "methodName",
+            method_params "methodParams",
+            cron_expression "cronExpression",
+            remark "remark",
+            job_status "jobStatus"
+        from insur_schedule_task where JOB_STATUS = #{jobStatus}
+    </select>
+</mapper>

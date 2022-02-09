@@ -1,0 +1,410 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.symedsoft.insurance.mapper.AutoUploadMapper">
+
+
+    <select id="getInpAdmit" resultType="map">
+        select b.patient_id,b.visit_id,a.visit_date,a.serial_no from inp_admit_result_out a,pat_visit b where a.patient_id=b.patient_id and a.visit_id=b.visit_id
+        and a.CANCEL_FLAG is null
+    </select>
+
+    <select id="getInpAdmitByPatientId" resultType="map">
+        select b.patient_id,b.visit_id,a.visit_date,a.serial_no from inp_admit_result_out a,pat_visit b where a.patient_id=b.patient_id and a.visit_id=b.visit_id
+        and a.CANCEL_FLAG is null and b.patient_id=#{patientId} and b.visit_id=#{visitId}
+        and rownum=1
+    </select>
+    <select id="getInpDetailFeedetail" resultType="map">
+        select a.patient_id||a.item_no as feedetl_sn,
+               a.item_no,
+               c.mdtrt_id,
+               a.oper_code as drord_no,
+               b.psn_no,
+               b.med_type,
+               a.billing_date_time as fee_ocur_time,
+               d.insur_code as med_list_codg,
+               a.item_code as medins_list_codg,
+               a.costs det_item_fee_sumamt,
+               a.amount as cnt,
+               a.item_price as pric,
+               a.ordered_by as bilg_dept_codg,
+               e.dept_name as bilg_dept_name,
+                d.item_unit as item_unit,
+                a.item_spec as item_spec,
+        (select ${doctorCode} from staff_dict where user_name=a.doctor_user) as bilg_dr_codg,
+        (select name from staff_dict where user_name=a.doctor_user) as bilg_dr_name,
+               a.performed_by as acord_dept_codg,
+               f.dept_name as acord_dept_name,
+               '1' as hosp_appr_flag,
+                ${selfFlag} as selfFlag,
+                pay_self_flag as pay_self_flag
+          from inp_bill_detail a,
+               (select patient_id,
+                       visit_id,
+                       max(psn_no) as psn_no,
+                       max(med_type) as med_type
+                  from INP_ADMIT_MDTRTINFO_IN where cancel_flag is null
+                 group by patient_id, visit_id) b,
+               (select patient_id, visit_id, max(mdtrt_id) as mdtrt_id
+                  from INP_ADMIT_RESULT_OUT where cancel_flag is null
+                 group by patient_id, visit_id) c,
+               insur_vs_clinic d,
+               dept_dict e,
+               dept_dict f
+         where a.patient_id = b.patient_id
+           and a.visit_id = b.visit_id
+           and a.patient_id = c.patient_id
+           and a.visit_id = c.visit_id
+           and a.item_code = d.item_code
+           and a.item_spec = d.item_spec
+           and a.item_class = d.item_class
+           and a.units=d.units
+           and a.ordered_by = e.dept_code
+           and a.performed_by = f.dept_code
+           and a.patient_id = #{patientId}
+           and a.visit_id = #{visitId}
+           and (a.trans_flag is null or a.trans_flag = '0')
+           and a.rcpt_no is null
+           and (select ${doctorCode} from staff_dict where user_name=a.doctor_user) is not  null
+           and d.insur_code is not null
+            order by a.item_no
+    </select>
+    <select id="getSerialNo" resultType="java.lang.String">
+         select to_char(sysdate,'yyyymmddhh24miss')||lpad(insur_serial_seq.nextval,2,0) from dual
+    </select>
+    <insert id="insertInpDetailFeedetail" useGeneratedKeys="true" keyProperty="ID">
+        insert into inp_detail_up_feedetail_in(
+        ID,SERIAL_NO,PATIENT_ID,VISIT_ID,VISIT_DATE,OPERATE_NO,FEEDETL_SN,INIT_FEEDETL_SN,
+        MDTRT_ID,DRORD_NO,PSN_NO,MED_TYPE,FEE_OCUR_TIME,MED_LIST_CODG,MEDINS_LIST_CODG,
+        DET_ITEM_FEE_SUMAMT,CNT,PRIC,BILG_DEPT_CODG,BILG_DEPT_NAME,BILG_DR_CODG,BILG_DR_NAME,
+        ACORD_DEPT_CODG,ACORD_DEPT_NAME,ORDERS_DR_CODE,ORDERS_DR_NAME,HOSP_APPR_FLAG,TCMDRUG_USED_WAY,
+        ETIP_FLAG,ETIP_HOSP_CODE,DSCG_TKDRUG_FLAG,MATN_FEE_FLAG,MEMO,EXP_CONTENT,ROLLBACK_REMAINING
+        )values(
+        sys_guid(),#{SERIAL_NO},#{PATIENT_ID},#{VISIT_ID},#{VISIT_DATE},#{OPERATE_NO},#{FEEDETL_SN},#{INIT_FEEDETL_SN},
+        #{MDTRT_ID},#{DRORD_NO},#{PSN_NO},#{MED_TYPE},#{FEE_OCUR_TIME},#{MED_LIST_CODG},#{MEDINS_LIST_CODG},
+        #{DET_ITEM_FEE_SUMAMT},#{CNT},#{PRIC},#{BILG_DEPT_CODG},#{BILG_DEPT_NAME},#{BILG_DR_CODG},#{BILG_DR_NAME},
+        #{ACORD_DEPT_CODG},#{ACORD_DEPT_NAME},#{ORDERS_DR_CODE},#{ORDERS_DR_NAME},#{HOSP_APPR_FLAG},#{TCMDRUG_USED_WAY},
+        #{ETIP_FLAG},#{ETIP_HOSP_CODE},#{DSCG_TKDRUG_FLAG},#{MATN_FEE_FLAG},#{MEMO},#{EXP_CONTENT},#{CNT}
+        )
+    </insert>
+    <insert id="insertInpDetailFeedetailExp">
+        insert into INP_DETAIL_UP_FEEDETAIL_IN_EXP(
+        ID,SERIAL_NO,PATIENT_ID,VISIT_ID,VISIT_DATE,OPERATE_NO,ER_FLAG,NODE_NUM
+        )values(sys_guid(),#{SERIAL_NO},#{PATIENT_ID},#{VISIT_ID},#{VISIT_DATE},#{OPERATE_NO},#{ER_FLAG},#{NODE_NUM})
+    </insert>
+    <update id="updateTransFlag">
+<!--        update inp_detail_up_feedetail_in set trans_flag=1 where id=#{serialNo}-->
+        <foreach collection="list" item="bean" index="index" open="begin" close=";end;" separator=";">
+            UPDATE inp_detail_up_feedetail_in
+            <set>
+                trans_flag=1
+            </set>
+            <where>
+                id = #{bean}
+            </where>
+        </foreach>
+    </update>
+    <select id="getUploadSerialNo" resultType="java.lang.String">
+        select distinct serial_no from INP_DETAIL_UP_FEEDETAIL_IN where trans_flag is null
+        and cancel_flag is null and patient_id=#{patientId} and visit_id=#{visitId}
+
+    </select>
+    <update id="updateDetailFlag">
+        update inp_bill_detail set trans_flag=1 where patient_id=#{patientId}
+        and visit_id=#{visitId} and item_no in
+        <foreach collection="itemNos" item="itemNo" index="index" separator="," open="(" close=")">
+            #{itemNo}
+        </foreach>
+    </update>
+    <select id="getInpDetailUpFeedetailIn" resultType="map">
+        select ID,FEEDETL_SN,INIT_FEEDETL_SN,
+        MDTRT_ID,DRORD_NO,PSN_NO,MED_TYPE,FEE_OCUR_TIME,MED_LIST_CODG,MEDINS_LIST_CODG,
+        DET_ITEM_FEE_SUMAMT,CNT,PRIC,BILG_DEPT_CODG,BILG_DEPT_NAME,BILG_DR_CODG,BILG_DR_NAME,
+        ACORD_DEPT_CODG,ACORD_DEPT_NAME,ORDERS_DR_CODE,ORDERS_DR_NAME,HOSP_APPR_FLAG,TCMDRUG_USED_WAY,
+        ETIP_FLAG,ETIP_HOSP_CODE,DSCG_TKDRUG_FLAG,MATN_FEE_FLAG,MEMO
+        from inp_detail_up_feedetail_in where serial_no=#{serialNo} and trans_flag is null
+        and cancel_flag is null
+        <choose>
+            <when test="!isRollBack">
+                <![CDATA[ and cnt > 0 ]]>
+            </when>
+            <otherwise>
+                <![CDATA[ and cnt < 0 ]]>
+
+            </otherwise>
+        </choose>
+        <![CDATA[ and rownum <= 40 ]]>
+        order by fee_ocur_time
+    </select>
+
+    <select id="queryCutDownInpDetail" resultType="map" parameterType="map">
+            select id,feedetl_sn,rollback_remaining
+            from inp_detail_up_feedetail_in
+            where serial_no=#{serialNo}
+            and trans_flag = 1
+            and ROLLBACK_REMAINING > 0
+            and cancel_flag is null
+            and medins_list_codg = #{medinsListCodg}
+            and pric = #{pric}
+            order by fee_ocur_time
+    </select>
+
+    <update id="modifyInpDetailRecord">
+        update inp_detail_up_feedetail_in
+        set rollback_remaining = #{rollbackRemaining}
+        where id = #{id}
+    </update>
+
+    <select id="queryInpDetailUpFeedetailInCount" resultType="int">
+        select count(1) from inp_detail_up_feedetail_in
+        where serial_no=#{serialNo} and trans_flag is null
+        and cancel_flag is null
+        <choose>
+            <when test="!isRollBack">
+                <![CDATA[ and cnt > 0 ]]>
+            </when>
+            <otherwise>
+                <![CDATA[ and cnt < 0 ]]>
+            </otherwise>
+        </choose>
+    </select>
+    <select id="getInpFeeInterfaceConfig" resultType="com.symedsoft.insurance.vo.InsurBusinessConfigVO">
+        SELECT
+        BUSINESSID	businessid	,
+        IO_FLAG	io_flag	,
+        CONFIG_ITEM	config_item	,
+        CONFIG_TYPE	config_type	,
+        CONFIG_ITEM	node	,
+        ITEM_NO	item_no	,
+        RELAT_BID	relat_bid	,
+        NODE_TABLE	node_table	,
+        MULTI_LINE	multi_line  ,
+        NODE_DATE_TYPE node_date_type ,
+        NODE_TIME_TYPE node_time_type ,
+        NODE_NUMBER_TYPE  node_number_type
+        FROM INSUR_BUSINESS_CONFIG
+        where
+        /*CONFIG_TYPE:1-item 2-node 3-exp扩展字段 */
+        CONFIG_TYPE = '2'
+        AND UPPER(IO_FLAG) = 'I'
+        AND BUSINESSID = '2301'
+        AND CONFIG_ITEM='feedetail'
+    </select>
+    <select id="getInpDetailUpFeedetailInExp" resultType="java.util.Map">
+        select er_flag from INP_DETAIL_UP_FEEDETAIL_IN_EXP where node_num=#{nodeNum}
+    </select>
+    <select id="getPatientInfo" resultType="map">
+        select distinct patient_id,visit_id,VISIT_DATE,OPERATE_NO from inp_detail_up_feedetail_in
+        where serial_no=#{serialNo}
+    </select>
+    <select id="getBronInfo" resultType="string">
+        select patient_id from newborn_rec where
+        patient_id_of_mother=#{patientId} and visit_id_of_mother=#{visitId}
+    </select>
+    <select id="getInpDetailFeedetailAndBron" resultType="map">
+        select a.patient_id||a.item_no as feedetl_sn,
+        a.item_no,
+        c.mdtrt_id,
+        a.oper_code as drord_no,
+        b.psn_no,
+        b.med_type,
+        a.billing_date_time as fee_ocur_time,
+        d.insur_code as med_list_codg,
+        a.item_code as medins_list_codg,
+        a.costs det_item_fee_sumamt,
+        a.amount as cnt,
+        a.item_price as pric,
+        a.ordered_by as bilg_dept_codg,
+        e.dept_name as bilg_dept_name,
+        d.item_unit as item_unit,
+        a.item_spec as item_spec,
+        (select ${doctorCode} from staff_dict where user_name=a.doctor_user) as bilg_dr_codg,
+        a.order_doctor as bilg_dr_name,
+        a.performed_by as acord_dept_codg,
+        f.dept_name as acord_dept_name,
+        '1' as hosp_appr_fla,
+        ${selfFlag} as selfFlag
+        from inp_bill_detail a,
+        (select patient_id,
+        visit_id,
+        max(psn_no) as psn_no,
+        max(med_type) as med_type
+        from INP_ADMIT_MDTRTINFO_IN
+        group by patient_id, visit_id) b,
+        (select patient_id, visit_id, max(mdtrt_id) as mdtrt_id
+        from INP_ADMIT_RESULT_OUT
+        group by patient_id, visit_id) c,
+        insur_vs_clinic d,
+        dept_dict e,
+        dept_dict f
+        where a.patient_id = b.patient_id
+        and a.visit_id = b.visit_id
+        and a.patient_id = c.patient_id
+        and a.visit_id = c.visit_id
+        and a.item_code = d.item_code
+        and a.item_spec = d.item_spec
+        and a.ordered_by = e.dept_code
+        and a.performed_by = f.dept_code
+        and a.patient_id = #{patientId}
+        and a.visit_id = #{visitId}
+        and (a.trans_flag is null or a.trans_flag = '0')
+        and a.rcpt_no is null
+        order by a.item_no
+        union all
+        select a.patient_id||a.item_no as feedetl_sn,
+        a.item_no,
+        (select max(mdtrt_id)
+        from INP_ADMIT_RESULT_OUT
+        where patient_id = a.patient_id
+        and visit_id = a.visit_id
+        and cancel_flag is null) mdtrt_id,
+        a.oper_code as drord_no,
+        (select max(psn_no)
+        from INP_ADMIT_MDTRTINFO_IN
+        where patient_id = a.patient_id
+        and visit_id = a.visit_id
+        and cancel_flag is null) psn_no,
+        (select max(med_type)
+        from INP_ADMIT_MDTRTINFO_IN
+        where patient_id = a.patient_id
+        and visit_id = a.visit_id
+        and cancel_flag is null) med_type,
+        a.billing_date_time as fee_ocur_time,
+        d.insur_code as med_list_codg,
+        a.item_code as medins_list_codg,
+        a.costs det_item_fee_sumamt,
+        a.amount as cnt,
+        a.item_price as pric,
+        a.ordered_by as bilg_dept_codg,
+        e.dept_name as bilg_dept_name,
+        d.item_unit as item_unit,
+        a.item_spec as item_spec,
+        (select ${doctorCode} from staff_dict where user_name = a.doctor_user) as bilg_dr_codg,
+        a.order_doctor as bilg_dr_name,
+        a.performed_by as acord_dept_codg,
+        f.dept_name as acord_dept_name,
+        '1' as hosp_appr_fla,
+        ${selfFlag} as selfFlag
+        from inp_bill_detail a, insur_vs_clinic d, dept_dict e, dept_dict f
+        where a.item_code = d.item_code
+        and a.item_spec = d.item_spec
+        and a.ordered_by = e.dept_code
+        and a.performed_by = f.dept_code
+        and a.patient_id in
+        <foreach collection="bronIds" item="id" index="index" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+        and a.visit_id = 1
+        and (a.trans_flag is null or a.trans_flag = '0')
+        and a.rcpt_no is null
+        order by a.item_no
+    </select>
+    <select id="getInpBillDetail" resultType="map">
+        select item_name,item_code,item_spec from inp_bill_detail where patient_id=#{patientId} and a.visit_id = #{visitId}
+        and a.trans_flag is null and a.rcpt_no is null
+    </select>
+    <select id="getInsurVsClinic" resultType="map">
+        select insur_code from item_code=#{itemCode} and item_spec=#{itemSpec}
+    </select>
+    
+    <select id="queryRepeatDrugPrice" resultType="map">
+        select drug_code,min_spec,firm_id,count(*) total
+        from drug_price_list
+        where stop_date is null
+        group by drug_code,min_spec,firm_id
+        HAVING count(*) > 1
+    </select>
+    <select id="getPackPrice" resultType="java.math.BigDecimal">
+        select max(retail_price) as retail_price
+        from drug_price_list where drug_code=#{itemCode}
+        and  #{billingDate} >=start_date and (#{billingDate}  &lt; stop_date or stop_date is null)
+        and units=#{itemUnit} and firm_id =#{firmId}
+        and min_spec = #{minSpec}
+    </select>
+    <select id="getCountPositiveFee" resultType="int">
+        select count(*)
+        from inp_detail_up_feedetail_in where patient_id=#{patientId} and visit_id=#{visitId}
+        and trans_flag is null and cancel_flag is null and CNT &gt; 0
+    </select>
+    <select id="getMinUnits" resultType="map">
+        select firm_id,min_spec
+        from drug_price_list where drug_code=#{itemCode}
+        and drug_spec||firm_id=#{itemSpec}
+        and  #{billingDate} >=start_date and (#{billingDate}  &lt; stop_date or stop_date is null)
+    </select>
+    <select id="getInpBillDetailOne" resultType="map">
+        select item_code,item_spec,units,item_class,billing_date_time  from inp_bill_detail where
+        patient_id = #{patientId} and item_no=#{itemNo} and visit_id=#{visitId}
+    </select>
+    <select id="getItemUnitsFromInsurVsClinic" resultType="map">
+       select item_unit from insur_vs_clinic where item_code=#{itemCode}
+        and item_spec=#{itemSpec} and item_class=#{itemClass} and units=#{units}
+    </select>
+    <select id="getZyCount" resultType="int">
+	    select count(*) from drug_dict  where drug_code=#{itemCode} and drug_form='配方颗粒' and drug_indicator=2
+    </select>
+    <select id="queryCutDownOneInpDetail" resultType="map">
+        select id,feedetl_sn,rollback_remaining
+        from inp_detail_up_feedetail_in
+        where serial_no=#{serialNo}
+        and trans_flag = 1
+        and ROLLBACK_REMAINING > 0
+        and cancel_flag is null
+        and medins_list_codg = #{medinsListCodg}
+        and -det_item_fee_sumamt = #{totalCosts}
+        and -cnt=#{ctn}
+        order by fee_ocur_time
+    </select>
+    <select id="queryCutDownEqualsInpDetail" resultType="map">
+        select id,feedetl_sn,rollback_remaining
+        from inp_detail_up_feedetail_in
+        where serial_no=#{serialNo}
+        and trans_flag = 1
+        and ROLLBACK_REMAINING > 0
+        and cancel_flag is null
+        and medins_list_codg = #{medinsListCodg}
+        and -det_item_fee_sumamt = #{totalCosts}
+        and -cnt=#{ctn}
+        and pric = #{pric}
+        order by fee_ocur_time
+    </select>
+    <select id="getPreSettleInput" resultType="map">
+        select a.psn_no "psn_no",
+        a.mdtrt_cert_type  "mdtrt_cert_type",
+        a.mdtrt_cert_no "mdtrt_cert_no",
+        c.mdtrt_id "mdtrt_id",
+        a.insutype "insutype",
+        '' "invono",
+        '02' "psn_setlway",
+        '0' "mid_setl_flag",
+        trunc(sysdate) "dscgtime",
+        '1'"acct_used_flag",
+        sum(b.det_item_fee_sumamt) as "medfee_sumamt",
+        sum(b.fulamt_ownpay_amt) as "fulamt_ownpay_amt",
+        sum(b.overlmt_amt) as "overlmt_selfpay",
+        sum(b.preselfpay_amt) as "preselfpay_amt",
+        sum(b.inscp_scp_amt) as "inscp_scp_amt"
+        from  INP_ADMIT_RESULT_OUT     c
+        join  INP_ADMIT_MDTRTINFO_IN   a  on  a.visit_id = c.visit_id and a.serial_no = c.serial_no
+        join  INP_DETAIL_UP_RESULT_OUT b  on a.patient_id = b.patient_id and a.visit_id = b.visit_id and a.serial_no = b.serial_no
+        where  b.cancel_flag is null
+        and c.cancel_flag is null
+        and a.patient_id = #{patientId}
+        and a.visit_id = #{visitId}
+        group by a.psn_no, a.mdtrt_cert_type, a.mdtrt_cert_no,
+        a.med_type, c.mdtrt_id, a.insutype
+    </select>
+    <delete id="deletePreSettleDataIn">
+        delete from inp_pre_settle_data_in where patient_id=#{patientId} and visit_id=#{visitId}
+    </delete>
+    <delete id="deletePreSettleSetldetailOut">
+        delete from inp_pre_settle_setldetail_out where patient_id=#{patientId} and visit_id=#{visitId}
+    </delete>
+    <delete id="deletePreSettleSetlinfoOut">
+        delete from inp_pre_settle_setlinfo_out where patient_id=#{patientId} and visit_id=#{visitId}
+    </delete>
+    <select id="getMedType" resultType="String">
+        select max(med_type) as med_type from INP_ADMIT_MDTRTINFO_IN where cancel_flag is null
+        and patient_id=#{patientId} and visit_id=#{visitId}
+    </select>
+
+</mapper>

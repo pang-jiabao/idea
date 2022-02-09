@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.symedsoft.insurance.mapper.ParticipateMapper">
+
+    <!--通用数据表的插入，动态改变表名和插入数据-->
+    <insert id="insertTB1" parameterType="java.util.Map" statementType="STATEMENT">
+        insert into ${tableNum}  (
+        <foreach collection="columnMap" item="value" index="key" separator="," >
+            ${key}
+        </foreach>
+        )
+        values (
+        <foreach collection="columnMap" item="value" index="key" separator=",">
+            ${value}
+        </foreach>
+        )
+    </insert>
+
+    <!--查询表名，日期字段，日期时间字段-->
+    <select id="getTableFields" resultType="java.util.HashMap">
+        select node_table,node_date_type,node_time_type,need_lookup_fields from INSUR_BUSINESS_CONFIG
+        where businessid = #{interfaceCode} and table_no = #{tableCode}
+    </select>
+
+
+
+    <!--查询插入通用数据表的医保参数-->
+    <select id="getInsurField" resultType="java.util.HashMap">
+        SELECT P.PSN_NO, A.MDTRT_ID, S.SETL_ID FROM  GET_PATIENT_BASEINFO_OUT P
+              LEFT JOIN INP_ADMIT_RESULT_OUT A
+                   ON P.PATIENT_ID = A.PATIENT_ID AND A.VISIT_ID = #{visit_id} AND  A.CANCEL_FLAG != 1
+              LEFT JOIN  INP_SETTLE_SETLINFO_OUT S
+                   ON P.PATIENT_ID = S.PATIENT_ID AND S.VISIT_ID = #{visit_id} AND S.CANCEL_FLAG IS NULL
+        WHERE P.PATIENT_ID = #{patient_id} AND ROWNUM = 1   ORDER BY  S.OUTPUT_TIME DESC
+    </select>
+</mapper>
+
+
+

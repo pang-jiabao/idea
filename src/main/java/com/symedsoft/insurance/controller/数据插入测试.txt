@@ -1,0 +1,8 @@
+接口配置表   insur_business_config
+
+DETAIL_AUDIT_BF_PATIENT_IN  3101 3 {"patient_id":"1999","operate_no":"3001","visit_date":"2020-11-01","patn_id":"1",
+"patn_name":"1","gend":"1","brdy":"2020-11-02","poolarea":"1","curr_mdtrt_id":"1",
+"fsi_encounter_dtos":"1","fsi_his_data_dto":"1"}
+
+RESULTDETS_RPTDETAILINFO_IN 5402 1 {"patient_id":"1234","operate_no":"3001","visit_date":"2020-09-1",
+"visit_id":"666","psn_no":"666","rpotc_no":"666","fixmedins_code":"666"}

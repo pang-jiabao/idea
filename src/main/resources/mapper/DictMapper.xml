@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.symedsoft.insurance.mapper.DictMapper">
+    <select id="queryDictItem" resultType="map">
+        select dict_name "dictName" , dict_desc "dictDesc" from INSUR_DICT_ITEM
+    </select>
+
+    <!--删除表-->
+    <delete id="delDict" parameterType="string">
+        delete from insur_dict_temp where 1=1 and dict_name = #{dictName}
+    </delete>
+
+    <insert id="addBatchDict" parameterType="map">
+        INSERT ALL
+        <foreach collection="list" item="record" index="index" separator=" " >
+            INTO insur_dict_temp(dict_name,item_code,item_name,dict_memo) VALUES (
+            LOWER(#{record.type}),
+            #{record.value},
+            #{record.label},
+            #{dictDesc}
+            )
+        </foreach>
+        SELECT 1 FROM DUAL
+    </insert>
+
+    <select id="queryDictCodeByItem" parameterType="map" resultType="string">
+        select item_code "item_code" from insur_dict
+        where dict_name = #{dictName} and item_name = #{itemName}
+    </select>
+
+    <select id="queryDictCodeByName" parameterType="string" resultType="map">
+        select dict_name "dictName" , item_code "itemCode" ,item_name "itemName",dict_memo "dictMemo" from insur_dict
+        where dict_name = #{dictName}
+    </select>
+
+    <select id="queryItemNameByItemCode" parameterType="map" resultType="string">
+        select item_name "itemName" from insur_dict
+        where dict_name = #{dictName} and item_code = #{itemCode}
+    </select>
+
+    <insert id="mergeDict">
+        MERGE INTO insur_dict a USING (select b.dict_name,b.item_code,b.item_name,b.dict_memo from insur_dict_temp b) c
+            ON (a.dict_name=c.dict_name and a.item_code = c.item_code)
+            WHEN MATCHED THEN
+                UPDATE SET a.item_name=c.item_name
+            WHEN NOT MATCHED THEN
+                INSERT(a.dict_name,a.item_code,a.item_name,a.dict_memo) VALUES(c.dict_name,c.item_code,c.item_name,c.dict_memo)
+    </insert>
+</mapper>

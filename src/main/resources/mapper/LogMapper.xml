@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.symedsoft.insurance.mapper.LogMapper">
+    <insert id="insertInsuranceBusinessLog">
+        INSERT INTO INSUR_BUSINESS_LOG
+        (
+            ID,
+            SERIAL_NO,
+            INTERFACE_CODE,
+            PATIENT_ID,
+            VISIT_DATE,
+            VISIT_ID,
+            OPERATE_NO,
+            IN_JSON,
+            msgid
+        )VALUES
+        (
+            SYS_GUID(),
+            #{serialNo},
+            #{interfaceCode},
+            #{patientId},
+            #{visitDate},
+            #{visitId},
+            #{operateNo},
+            #{json},
+            #{msgId}
+        )
+    </insert>
+
+    <update id="UpdateInsuranceBusinessLog">
+        UPDATE INSUR_BUSINESS_LOG
+        <set>
+            INFCODE = #{res.infCode},
+            INF_REFMSGID = #{res.inf_refmsgid},
+            REFMSG_TIME = #{res.refmsg_time},
+            RESPOND_TIME =  #{res.respond_time},
+            ERR_MSG =  #{res.err_msg},
+            OUT_JSON = #{json}
+        </set>
+        WHERE  INTERFACE_CODE =   #{interfaceCode}
+        AND SERIAL_NO = #{serialNo}
+    </update>
+
+    <update id="UpdateInsuranceBusinessJsonLog">
+        UPDATE INSUR_BUSINESS_LOG
+        <set>
+            INFCODE = #{res.infCode},
+            INF_REFMSGID = #{res.inf_refmsgid},
+            REFMSG_TIME = #{res.refmsg_time},
+            RESPOND_TIME =  #{res.respond_time},
+            ERR_MSG =  #{res.err_msg},
+            OUT_JSON = #{outJson},
+            IN_JSON=#{inJson}
+        </set>
+        WHERE  INTERFACE_CODE =   #{interfaceCode}
+        AND SERIAL_NO = #{serialNo}
+    </update>
+    <select id="queryOperateNoFromLog"  resultType="string">
+        select operate_no from  INSUR_BUSINESS_LOG
+        where SERIAL_NO = #{serialNo} and INTERFACE_CODE = #{interfaceCode}
+    </select>
+
+    <select id="queryLogBySerialNo"  resultType="map">
+        SELECT DISTINCT
+            PATIENT_ID "patientId",
+            VISIT_DATE "visitDate",
+            VISIT_ID "visitId",
+            OPERATE_NO "operateNo",
+            MSGID "msgid"
+        FROM  INSUR_BUSINESS_LOG
+        WHERE SERIAL_NO = #{serialNo} AND INTERFACE_CODE = #{interfaceCode}
+    </select>
+
+    <insert id="UpdateBusinessLogByLog">
+        UPDATE INSUR_BUSINESS_LOG
+        <set>
+            INFCODE = #{log.infCode},
+            INF_REFMSGID = #{log.inf_refmsgid},
+            REFMSG_TIME = #{log.refmsg_time},
+            RESPOND_TIME =  #{log.respond_time},
+            ERR_MSG =  #{log.err_msg},
+            OUT_JSON = #{log.exportJson}
+        </set>
+        WHERE  INTERFACE_CODE =  #{log.interfaceCode}
+        AND SERIAL_NO = #{log.serialNo}
+    </insert>
+
+    <insert id="insertUploadLog">
+        INSERT INTO INSUR_BUSINESS_LOG
+        (
+            ID,
+            SERIAL_NO,
+            INTERFACE_CODE,
+            PATIENT_ID,
+            ERR_MSG
+        )VALUES
+        (
+            SYS_GUID(),
+            #{serialNo},
+            #{interfaceCode},
+            #{patientId},
+            #{errMsg}
+        )
+    </insert>
+
+</mapper>
